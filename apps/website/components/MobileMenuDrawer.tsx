@@ -103,7 +103,7 @@ export default function MobileMenuDrawer({ isOpen, onClose, menuItems }: MobileM
                     </>
                   ) : (
                     <Link
-                      href={item.href}
+                      href={item.href || '/'}
                       className="block py-2 px-3 text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition"
                       onClick={onClose}
                     >
