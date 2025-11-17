@@ -1,0 +1,43 @@
+{
+  "name": "website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "seed:rss": "tsx --env-file=.env.local scripts/seed-rss.ts",
+    "check": "tsx --env-file=.env.local scripts/check-articles.ts",
+    "test:ai": "tsx --env-file=.env.local scripts/test-ai.ts",
+    "list:models": "tsx --env-file=.env.local scripts/list-models.ts",
+    "test:links": "tsx --env-file=.env.local scripts/test-internal-linking.ts",
+    "seed:categories": "tsx --env-file=.env.local scripts/seed-categories-tags.ts"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@neondatabase/serverless": "^1.0.2",
+    "lucide-react": "^0.553.0",
+    "next": "16.0.3",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark": "^15.0.1",
+    "remark-html": "^16.0.1",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "dotenv": "^17.2.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.6",
+    "typescript": "^5"
+  }
+}
