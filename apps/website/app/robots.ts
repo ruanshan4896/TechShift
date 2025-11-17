@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 // IMPORTANT: Change 'disallow: "/"' to 'allow: "/"' before going live
-export default function robots(): Promise<MetadataRoute.Robots> {
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
