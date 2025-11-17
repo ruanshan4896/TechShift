@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 interface MenuItem {
   label: string;
-  href: string;
+  href?: string;
   submenu?: { label: string; href: string }[];
 }
 
