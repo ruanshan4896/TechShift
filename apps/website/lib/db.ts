@@ -130,13 +130,15 @@ export async function getLatestArticles(limit: number = 10): Promise<Article[]> 
   return rows as Article[];
 }
 
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
+export async function getArticleBySlug(slug: string): Promise<ArticleWithCategory | null> {
   const rows = await sql`
-    SELECT * FROM articles 
-    WHERE slug = ${slug}
+    SELECT a.*, c.name as category_name, c.slug as category_slug
+    FROM articles a
+    LEFT JOIN categories c ON a.category_id = c.id
+    WHERE a.slug = ${slug}
     LIMIT 1
   `;
-  return (rows[0] as Article) || null;
+  return (rows[0] as ArticleWithCategory) || null;
 }
 
 export async function insertArticle(article: Omit<Article, 'id' | 'created_at'>) {

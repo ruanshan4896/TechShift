@@ -48,9 +48,9 @@ export default async function PostPage({ params }: PageProps) {
   const tags = await getArticleTags(article.id);
 
   // Breadcrumb items
-  const breadcrumbItems = article.category_id
+  const breadcrumbItems = article.category_slug && article.category_name
     ? [
-        { label: 'Category', href: `/category/${article.category_id}` },
+        { label: article.category_name, href: `/category/${article.category_slug}` },
         { label: article.title.substring(0, 50) + (article.title.length > 50 ? '...' : '') }
       ]
     : [{ label: article.title.substring(0, 50) + (article.title.length > 50 ? '...' : '') }];

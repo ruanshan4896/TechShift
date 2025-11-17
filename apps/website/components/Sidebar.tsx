@@ -8,7 +8,7 @@ export default async function Sidebar() {
   const tags = await getPopularTags(10);
 
   return (
-    <aside className="space-y-6">
+    <aside className="space-y-6 sticky top-24 self-start">
       {/* Featured Articles */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-2 mb-4">

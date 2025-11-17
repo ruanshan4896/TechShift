@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface Category {
   id: number;
@@ -252,16 +253,34 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nội dung (Markdown) *
               </label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                rows={20}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Hỗ trợ Markdown: # Heading, ## Subheading, **bold**, - list, etc.
-              </p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Editor */}
+                <div>
+                  <textarea
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    rows={20}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                    required
+                    placeholder="Nhập nội dung Markdown..."
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Hỗ trợ Markdown: # Heading, ## Subheading, **bold**, - list, etc.
+                  </p>
+                </div>
+
+                {/* Preview */}
+                <div>
+                  <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 min-h-[500px] max-h-[600px] overflow-y-auto">
+                    <h3 className="text-sm font-medium text-gray-700 mb-3 sticky top-0 bg-gray-50 pb-2 border-b border-gray-200">
+                      Preview
+                    </h3>
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown>{formData.content || '*Nội dung preview sẽ hiển thị ở đây...*'}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-4">

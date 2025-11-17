@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Menu, X } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
+import MobileMenuDrawer from './MobileMenuDrawer';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -97,63 +98,20 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-gray-700"
+            onClick={() => setIsMenuOpen(true)}
+            className="md:hidden text-gray-700 hover:text-blue-700 transition"
           >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            <Menu size={24} />
           </button>
         </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <form onSubmit={handleSearch} className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm..."
-                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
-                >
-                  <Search size={20} />
-                </button>
-              </div>
-            </form>
-            {menuItems.map((item, index) => (
-              <div key={index} className="py-2">
-                {item.submenu ? (
-                  <>
-                    <div className="font-medium text-gray-900 mb-2">{item.label}</div>
-                    {item.submenu.map((subItem, subIndex) => (
-                      <Link
-                        key={subIndex}
-                        href={subItem.href}
-                        className="block pl-4 py-2 text-gray-700 hover:text-blue-700"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {subItem.label}
-                      </Link>
-                    ))}
-                  </>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className="block py-2 text-gray-700 hover:text-blue-700 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Mobile Menu Drawer */}
+      <MobileMenuDrawer
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        menuItems={menuItems}
+      />
     </header>
   );
 }
