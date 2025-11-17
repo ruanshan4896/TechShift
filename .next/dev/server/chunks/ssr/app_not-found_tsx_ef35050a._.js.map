@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/ruanshan/Desktop/test%20kiro/tech-news/app/not-found.tsx"],"sourcesContent":["import Link from \"next/link\";\n\nexport default function NotFound() {\n  return (\n    <div className=\"min-h-screen bg-gray-50 flex items-center justify-center px-4\">\n      <div className=\"text-center\">\n        <h1 className=\"text-6xl font-bold text-gray-900 mb-4\">404</h1>\n        <h2 className=\"text-2xl font-semibold text-gray-900 mb-4\">\n          Không tìm thấy trang\n        </h2>\n        <p className=\"text-gray-700 mb-8 text-lg\">\n          Trang bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.\n        </p>\n        <Link\n          href=\"/\"\n          className=\"inline-block bg-blue-700 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition-colors font-semibold shadow-md\"\n        >\n          Quay lại trang chủ\n        </Link>\n      </div>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;AAAA;;;AAEe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;kBACb,cAAA,8OAAC;YAAI,WAAU;;8BACb,8OAAC;oBAAG,WAAU;8BAAwC;;;;;;8BACtD,8OAAC;oBAAG,WAAU;8BAA4C;;;;;;8BAG1D,8OAAC;oBAAE,WAAU;8BAA6B;;;;;;8BAG1C,8OAAC,0LAAI;oBACH,MAAK;oBACL,WAAU;8BACX;;;;;;;;;;;;;;;;;AAMT"}}]
-}
