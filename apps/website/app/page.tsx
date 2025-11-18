@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getLatestArticles } from "@/lib/db";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 import Sidebar from "@/components/Sidebar";
 import { Calendar, Eye } from "lucide-react";
 
@@ -32,7 +33,7 @@ export default async function Home() {
                 >
                   <div className="relative h-48 w-full">
                     <Image
-                      src={article.cover_image_url}
+                      src={getOptimizedCloudinaryUrl(article.cover_image_url, 600)}
                       alt={article.title}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"

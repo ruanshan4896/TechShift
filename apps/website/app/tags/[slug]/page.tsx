@@ -1,4 +1,5 @@
 import { getTagBySlug, getArticlesByTag } from '@/lib/db';
+import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import Sidebar from '@/components/Sidebar';
@@ -70,7 +71,7 @@ export default async function TagPage({ params }: PageProps) {
                     <div className="md:flex">
                       <div className="md:w-64 h-48 md:h-auto relative">
                         <Image
-                          src={article.cover_image_url}
+                          src={getOptimizedCloudinaryUrl(article.cover_image_url, 400)}
                           alt={article.title}
                           fill
                           className="object-cover"

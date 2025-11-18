@@ -33,18 +33,20 @@ export async function POST(request: Request) {
     const timestamp = Math.round(new Date().getTime() / 1000);
     const crypto = require('crypto');
     
+    // Parameters to sign (must be in alphabetical order)
+    const paramsToSign = `folder=tech-news&timestamp=${timestamp}`;
     const signature = crypto
       .createHash('sha1')
-      .update(`timestamp=${timestamp}${apiSecret}`)
+      .update(paramsToSign + apiSecret)
       .digest('hex');
 
-    // Upload to Cloudinary using URLSearchParams for form data
+    // Upload to Cloudinary
     const uploadParams = new URLSearchParams();
     uploadParams.append('file', base64File);
+    uploadParams.append('folder', 'tech-news');
     uploadParams.append('timestamp', timestamp.toString());
     uploadParams.append('api_key', apiKey);
     uploadParams.append('signature', signature);
-    uploadParams.append('folder', 'tech-news');
 
     const uploadResponse = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getArticleBySlug, incrementViewCount, getArticleTags } from "@/lib/db";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 import type { Metadata } from "next";
 import ArticleContent from "@/components/ArticleContent";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -65,7 +66,7 @@ export default async function PostPage({ params }: PageProps) {
             <article className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="relative h-96 w-full">
                 <Image
-                  src={article.cover_image_url}
+                  src={getOptimizedCloudinaryUrl(article.cover_image_url, 1200)}
                   alt={article.title}
                   fill
                   className="object-cover"

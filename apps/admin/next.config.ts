@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
-    unoptimized: false,
+    unoptimized: true, // Disable Vercel image optimization (use Cloudinary instead)
     remotePatterns: [
       {
         protocol: 'https',
