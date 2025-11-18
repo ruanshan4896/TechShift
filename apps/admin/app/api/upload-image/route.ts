@@ -38,19 +38,22 @@ export async function POST(request: Request) {
       .update(`timestamp=${timestamp}${apiSecret}`)
       .digest('hex');
 
-    // Upload to Cloudinary
-    const uploadData = new FormData();
-    uploadData.append('file', base64File);
-    uploadData.append('timestamp', timestamp.toString());
-    uploadData.append('api_key', apiKey);
-    uploadData.append('signature', signature);
-    uploadData.append('folder', 'tech-news'); // Organize in folder
+    // Upload to Cloudinary using URLSearchParams for form data
+    const uploadParams = new URLSearchParams();
+    uploadParams.append('file', base64File);
+    uploadParams.append('timestamp', timestamp.toString());
+    uploadParams.append('api_key', apiKey);
+    uploadParams.append('signature', signature);
+    uploadParams.append('folder', 'tech-news');
 
     const uploadResponse = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
       {
         method: 'POST',
-        body: uploadData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: uploadParams.toString(),
       }
     );
 
