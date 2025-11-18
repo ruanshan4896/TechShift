@@ -25,3 +25,8 @@ body {
   color: #1d4ed8;
   text-decoration-style: solid;
 }
+
+/* Title case utility for consistent typography */
+.title-case {
+  text-transform: capitalize;
+}

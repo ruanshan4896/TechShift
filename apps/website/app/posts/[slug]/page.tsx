@@ -89,7 +89,7 @@ export default async function PostPage({ params }: PageProps) {
                   </span>
                 </div>
 
-                <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight title-case">
                   {article.title}
                 </h1>
 

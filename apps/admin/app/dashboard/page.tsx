@@ -14,25 +14,12 @@ interface Article {
 }
 
 export default function AdminDashboard() {
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchArticles();
-    }
-  }, [isAuthenticated]);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD || password === 'admin123') {
-      setIsAuthenticated(true);
-    } else {
-      alert('Mật khẩu không đúng!');
-    }
-  };
+    fetchArticles();
+  }, []);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -62,30 +49,14 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Đăng nhập Admin</h1>
-          <form onSubmit={handleLogin}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Nhập mật khẩu"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-            />
-            <button
-              type="submit"
-              className="w-full bg-blue-700 text-white py-2 rounded-lg hover:bg-blue-800"
-            >
-              Đăng nhập
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,6 +80,12 @@ export default function AdminDashboard() {
               <Plus size={20} />
               Thêm bài viết
             </Link>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+            >
+              Đăng xuất
+            </button>
           </div>
         </div>
 

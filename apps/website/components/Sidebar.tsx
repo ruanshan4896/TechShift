@@ -13,7 +13,7 @@ export default async function Sidebar() {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-2 mb-4">
           <Eye className="text-blue-700" size={20} />
-          <h3 className="text-xl font-bold text-gray-900">Bài viết nổi bật</h3>
+          <h3 className="text-xl font-bold text-gray-900 title-case">Bài viết nổi bật</h3>
         </div>
         <div className="space-y-4">
           {featured.map((article) => (
@@ -38,7 +38,7 @@ export default async function Sidebar() {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="text-blue-700" size={20} />
-          <h3 className="text-xl font-bold text-gray-900">Bài viết mới nhất</h3>
+          <h3 className="text-xl font-bold text-gray-900 title-case">Bài viết mới nhất</h3>
         </div>
         <div className="space-y-4">
           {latest.map((article) => (
@@ -62,7 +62,7 @@ export default async function Sidebar() {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center gap-2 mb-4">
           <Tag className="text-blue-700" size={20} />
-          <h3 className="text-xl font-bold text-gray-900">Tags phổ biến</h3>
+          <h3 className="text-xl font-bold text-gray-900 title-case">Tags phổ biến</h3>
         </div>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (

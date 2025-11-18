@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Tech News</h3>
+            <h3 className="text-white font-bold text-lg mb-4 title-case">Tech News</h3>
             <p className="text-sm leading-relaxed">
               Website tin tức công nghệ hàng đầu Việt Nam. Cập nhật tin tức mới nhất về AI, 
               Mobile, PC & Hardware và nhiều hơn nữa. Nội dung được tạo tự động bởi AI.
@@ -19,7 +19,7 @@ export default function Footer() {
 
           {/* Links */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Liên kết hữu ích</h3>
+            <h3 className="text-white font-bold text-lg mb-4 title-case">Liên kết hữu ích</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/category/ai" className="hover:text-white transition">
@@ -51,7 +51,7 @@ export default function Footer() {
 
           {/* Social */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Theo dõi chúng tôi</h3>
+            <h3 className="text-white font-bold text-lg mb-4 title-case">Theo dõi chúng tôi</h3>
             <div className="flex space-x-4 mb-4">
               <a 
                 href="#" 

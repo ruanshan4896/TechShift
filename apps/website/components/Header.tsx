@@ -50,7 +50,7 @@ export default function Header() {
               <div key={index} className="relative group">
                 {item.submenu ? (
                   <>
-                    <button className="text-gray-700 hover:text-blue-700 font-medium py-2">
+                    <button className="text-gray-700 hover:text-blue-700 font-medium py-2 title-case">
                       {item.label}
                     </button>
                     <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -58,7 +58,7 @@ export default function Header() {
                         <Link
                           key={subIndex}
                           href={subItem.href}
-                          className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                          className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 title-case"
                         >
                           {subItem.label}
                         </Link>
@@ -68,7 +68,7 @@ export default function Header() {
                 ) : (
                   <Link
                     href={item.href}
-                    className="text-gray-700 hover:text-blue-700 font-medium"
+                    className="text-gray-700 hover:text-blue-700 font-medium title-case"
                   >
                     {item.label}
                   </Link>

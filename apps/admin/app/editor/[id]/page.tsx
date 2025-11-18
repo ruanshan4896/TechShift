@@ -15,8 +15,6 @@ interface Category {
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [id, setId] = useState<string>('');
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   
@@ -34,22 +32,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   }, [params]);
 
   useEffect(() => {
-    if (isAuthenticated && id && id !== 'new') {
+    if (id && id !== 'new') {
       fetchArticle();
     }
-    if (isAuthenticated) {
-      fetchCategories();
-    }
-  }, [isAuthenticated, id]);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD || password === 'admin123') {
-      setIsAuthenticated(true);
-    } else {
-      alert('Mật khẩu không đúng!');
-    }
-  };
+    fetchCategories();
+  }, [id]);
 
   const fetchArticle = async () => {
     setLoading(true);
@@ -125,31 +112,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       .substring(0, 100);
     setFormData({ ...formData, slug });
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Đăng nhập Admin</h1>
-          <form onSubmit={handleLogin}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Nhập mật khẩu"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-            />
-            <button
-              type="submit"
-              className="w-full bg-blue-700 text-white py-2 rounded-lg hover:bg-blue-800"
-            >
-              Đăng nhập
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
