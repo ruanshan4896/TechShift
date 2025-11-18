@@ -113,6 +113,35 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setFormData({ ...formData, slug });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setFormData({ ...formData, cover_image_url: data.url });
+        alert('Upload ảnh thành công!');
+      } else {
+        alert(data.error || 'Upload ảnh thất bại');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Có lỗi xảy ra khi upload ảnh');
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -200,15 +229,29 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL ảnh bìa *
+                Ảnh bìa *
               </label>
-              <input
-                type="url"
-                value={formData.cover_image_url}
-                onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  disabled={loading}
+                />
+                {formData.cover_image_url && (
+                  <div className="relative w-full h-48 border border-gray-300 rounded-lg overflow-hidden">
+                    <img
+                      src={formData.cover_image_url}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <p className="text-sm text-gray-500">
+                  Upload ảnh hoặc giữ ảnh hiện tại. Ảnh sẽ được tối ưu tự động.
+                </p>
+              </div>
             </div>
 
             <div>
