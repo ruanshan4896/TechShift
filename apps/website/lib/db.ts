@@ -457,3 +457,82 @@ export async function getFeaturedArticles(limit: number = 5): Promise<Article[]>
   `;
   return rows as Article[];
 }
+
+export async function getRelatedArticlesByTags(articleId: number, limit: number = 4): Promise<Article[]> {
+  const rows = await sql`
+    SELECT DISTINCT a.*, COUNT(at2.tag_id) as shared_tags
+    FROM articles a
+    INNER JOIN article_tags at2 ON a.id = at2.article_id
+    WHERE at2.tag_id IN (
+      SELECT tag_id FROM article_tags WHERE article_id = ${articleId}
+    )
+    AND a.id != ${articleId}
+    GROUP BY a.id
+    ORDER BY shared_tags DESC, a.published_at DESC
+    LIMIT ${limit}
+  `;
+  return rows as Article[];
+}
+
+export async function getTotalArticlesCount(): Promise<number> {
+  const rows = await sql`SELECT COUNT(*) as count FROM articles`;
+  return rows[0].count as number;
+}
+
+export async function getTotalArticlesByCategory(categorySlug: string): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*) as count
+    FROM articles a
+    INNER JOIN categories c ON a.category_id = c.id
+    WHERE c.slug = ${categorySlug}
+  `;
+  return rows[0].count as number;
+}
+
+export async function getTotalArticlesByTag(tagSlug: string): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*) as count
+    FROM articles a
+    INNER JOIN article_tags at ON a.id = at.article_id
+    INNER JOIN tags t ON at.tag_id = t.id
+    WHERE t.slug = ${tagSlug}
+  `;
+  return rows[0].count as number;
+}
+
+export async function getLatestArticlesPaginated(limit: number = 10, offset: number = 0): Promise<Article[]> {
+  const rows = await sql`
+    SELECT * FROM articles 
+    ORDER BY published_at DESC 
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `;
+  return rows as Article[];
+}
+
+export async function getArticlesByCategoryPaginated(categorySlug: string, limit: number = 10, offset: number = 0): Promise<ArticleWithCategory[]> {
+  const rows = await sql`
+    SELECT a.*, c.name as category_name, c.slug as category_slug
+    FROM articles a
+    LEFT JOIN categories c ON a.category_id = c.id
+    WHERE c.slug = ${categorySlug}
+    ORDER BY a.published_at DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `;
+  return rows as ArticleWithCategory[];
+}
+
+export async function getArticlesByTagPaginated(tagSlug: string, limit: number = 10, offset: number = 0): Promise<Article[]> {
+  const rows = await sql`
+    SELECT a.*
+    FROM articles a
+    INNER JOIN article_tags at ON a.id = at.article_id
+    INNER JOIN tags t ON at.tag_id = t.id
+    WHERE t.slug = ${tagSlug}
+    ORDER BY a.published_at DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `;
+  return rows as Article[];
+}

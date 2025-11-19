@@ -1,8 +1,9 @@
-import { getCategoryBySlug, getArticlesByCategory } from '@/lib/db';
+import { getCategoryBySlug, getArticlesByCategoryPaginated, getTotalArticlesByCategory } from '@/lib/db';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import Sidebar from '@/components/Sidebar';
+import Pagination from '@/components/Pagination';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Eye } from 'lucide-react';
@@ -10,6 +11,7 @@ import type { Metadata } from 'next';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -26,10 +28,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function CategoryPage({ params }: PageProps) {
+export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const search = await searchParams;
+  const currentPage = Number(search.page) || 1;
+  const articlesPerPage = 12;
+  const offset = (currentPage - 1) * articlesPerPage;
+
   const category = await getCategoryBySlug(slug);
-  const articles = await getArticlesByCategory(slug, 20);
+
+  if (!category) {
+    notFound();
+  }
+
+  const [articles, totalCount] = await Promise.all([
+    getArticlesByCategoryPaginated(slug, articlesPerPage, offset),
+    getTotalArticlesByCategory(slug),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / articlesPerPage);
 
   if (!category) {
     notFound();
@@ -88,6 +105,8 @@ export default async function CategoryPage({ params }: PageProps) {
                 ))}
               </div>
             )}
+
+            <Pagination currentPage={currentPage} totalPages={totalPages} />
           </div>
           
           <Sidebar />

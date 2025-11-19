@@ -1,8 +1,9 @@
-import { getTagBySlug, getArticlesByTag } from '@/lib/db';
+import { getTagBySlug, getArticlesByTagPaginated, getTotalArticlesByTag } from '@/lib/db';
 import { getOptimizedCloudinaryUrl } from '@/lib/cloudinary';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import Sidebar from '@/components/Sidebar';
+import Pagination from '@/components/Pagination';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, Eye, Tag } from 'lucide-react';
@@ -10,6 +11,7 @@ import type { Metadata } from 'next';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -26,10 +28,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function TagPage({ params }: PageProps) {
+export default async function TagPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const search = await searchParams;
+  const currentPage = Number(search.page) || 1;
+  const articlesPerPage = 12;
+  const offset = (currentPage - 1) * articlesPerPage;
+
   const tag = await getTagBySlug(slug);
-  const articles = await getArticlesByTag(slug, 20);
+
+  if (!tag) {
+    notFound();
+  }
+
+  const [articles, totalCount] = await Promise.all([
+    getArticlesByTagPaginated(slug, articlesPerPage, offset),
+    getTotalArticlesByTag(slug),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / articlesPerPage);
 
   if (!tag) {
     notFound();
@@ -53,7 +70,7 @@ export default async function TagPage({ params }: PageProps) {
             </div>
             
             <p className="text-gray-600 mb-6">
-              {articles.length} bài viết được gắn tag này
+              {totalCount} bài viết được gắn tag này
             </p>
             
             {articles.length === 0 ? (
@@ -100,6 +117,8 @@ export default async function TagPage({ params }: PageProps) {
                 ))}
               </div>
             )}
+
+            <Pagination currentPage={currentPage} totalPages={totalPages} />
           </div>
           
           <Sidebar />

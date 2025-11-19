@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getArticleBySlug, incrementViewCount, getArticleTags } from "@/lib/db";
+import { getArticleBySlug, getArticleTags } from "@/lib/db";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 import type { Metadata } from "next";
 import ArticleContent from "@/components/ArticleContent";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Sidebar from "@/components/Sidebar";
+import ViewCounter from "@/components/ViewCounter";
+import RelatedPosts from "@/components/RelatedPosts";
 import { Calendar, Eye, Tag } from "lucide-react";
 
 interface PageProps {
@@ -23,13 +25,36 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  // Get absolute URL for images
+  const imageUrl = article.cover_image_url.startsWith('http') 
+    ? article.cover_image_url 
+    : `https://technews.vn${article.cover_image_url}`;
+
   return {
     title: `${article.title} - Tech News`,
     description: article.summary,
     openGraph: {
       title: article.title,
       description: article.summary,
-      images: [article.cover_image_url],
+      url: `https://technews.vn/posts/${article.slug}`,
+      siteName: 'Tech News',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+      locale: 'vi_VN',
+      type: 'article',
+      publishedTime: new Date(article.published_at).toISOString(),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.summary,
+      images: [imageUrl],
     },
   };
 }
@@ -41,9 +66,6 @@ export default async function PostPage({ params }: PageProps) {
   if (!article) {
     notFound();
   }
-
-  // Increment view count
-  await incrementViewCount(slug);
 
   // Get article tags
   const tags = await getArticleTags(article.id);
@@ -58,6 +80,7 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <div className="bg-gray-50">
+      <ViewCounter slug={slug} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Breadcrumbs items={breadcrumbItems} />
 
@@ -118,6 +141,8 @@ export default async function PostPage({ params }: PageProps) {
                 </div>
               </div>
             </article>
+
+            <RelatedPosts articleId={article.id} />
           </div>
 
           <Sidebar />

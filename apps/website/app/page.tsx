@@ -1,14 +1,29 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getLatestArticles } from "@/lib/db";
+import { getLatestArticlesPaginated, getTotalArticlesCount } from "@/lib/db";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 import Sidebar from "@/components/Sidebar";
+import Pagination from "@/components/Pagination";
 import { Calendar, Eye } from "lucide-react";
 
 export const revalidate = 3600; // ISR: Revalidate every hour
 
-export default async function Home() {
-  const articles = await getLatestArticles(12);
+interface HomeProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const params = await searchParams;
+  const currentPage = Number(params.page) || 1;
+  const articlesPerPage = 12;
+  const offset = (currentPage - 1) * articlesPerPage;
+
+  const [articles, totalCount] = await Promise.all([
+    getLatestArticlesPaginated(articlesPerPage, offset),
+    getTotalArticlesCount(),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / articlesPerPage);
 
   return (
     <div className="bg-gray-50">
@@ -60,6 +75,8 @@ export default async function Home() {
                 </Link>
               ))}
             </div>
+
+            <Pagination currentPage={currentPage} totalPages={totalPages} />
           </div>
 
           <Sidebar />
