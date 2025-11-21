@@ -77,7 +77,7 @@ export async function GET(request: Request) {
           status: 'success',
         });
 
-        console.log(`✓ Processed: ${finalTitle} (${linkCount} links)`);
+        console.log(`✓ Processed: ${finalTitle}`);
       } catch (error) {
         console.error(`Error processing article ${rawArticle.id}:`, error);
 
