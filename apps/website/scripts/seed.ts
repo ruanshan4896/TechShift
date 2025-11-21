@@ -20,6 +20,7 @@ Công nghệ AI đang ngày càng trở nên dễ tiếp cận hơn với các n
     cover_image_url: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
     published_at: new Date('2025-01-15'),
     view_count: 0,
+    status: 'PUBLISHED' as const,
   },
   {
     title: 'Next.js 15: Những tính năng mới đáng chú ý',
@@ -40,6 +41,7 @@ Next.js tiếp tục là framework React hàng đầu cho production.`,
     cover_image_url: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800',
     published_at: new Date('2025-01-10'),
     view_count: 0,
+    status: 'PUBLISHED' as const,
   },
   {
     title: 'Tailwind CSS 4.0: Thiết kế web hiện đại',
@@ -60,6 +62,7 @@ Tailwind tiếp tục là lựa chọn hàng đầu cho utility-first CSS.`,
     cover_image_url: 'https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?w=800',
     published_at: new Date('2025-01-05'),
     view_count: 0,
+    status: 'PUBLISHED' as const,
   },
   {
     title: 'TypeScript 5.5: An toàn kiểu dữ liệu tốt hơn',
@@ -80,6 +83,7 @@ TypeScript giúp code JavaScript an toàn và dễ bảo trì hơn.`,
     cover_image_url: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800',
     published_at: new Date('2024-12-28'),
     view_count: 0,
+    status: 'PUBLISHED' as const,
   },
   {
     title: 'Vercel Postgres: Database cho ứng dụng serverless',
@@ -100,6 +104,7 @@ Vercel Postgres là lựa chọn tuyệt vời cho các ứng dụng Next.js pro
     cover_image_url: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800',
     published_at: new Date('2024-12-20'),
     view_count: 0,
+    status: 'PUBLISHED' as const,
   },
 ];
 
