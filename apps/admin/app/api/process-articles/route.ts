@@ -6,8 +6,8 @@ import {
   checkSlugExists,
   updateArticleContent,
 } from '@/lib/db';
-import { processArticleWithGemini, generateSlug, getDefaultCoverImage, extractKeywords } from '@/lib/gemini';
-import { buildInternalLinks, countInternalLinks } from '@/lib/internal-linking';
+import { processArticleWithAI, generateSlug, getDefaultCoverImage } from '@/lib/ai-processor';
+import { insertInternalLinks } from '@/lib/internal-linking';
 
 export async function GET(request: Request) {
   try {
@@ -17,8 +17,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if Gemini API key is configured
-    if (!process.env.GEMINI_API_KEY) {
+    // Check if Gemini API keys are configured
+    if (!process.env.GEMINI_API_KEYS && !process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         { error: 'Gemini API key not configured' },
         { status: 500 }
@@ -32,28 +32,28 @@ export async function GET(request: Request) {
       try {
         console.log(`Processing article: ${rawArticle.title}`);
 
-        // Process with Gemini
-        const processed = await processArticleWithGemini(
+        // Process with AI (new implementation)
+        const processed = await processArticleWithAI(
           rawArticle.title,
           rawArticle.original_content,
-          rawArticle.original_url
+          [] // No related articles for now
         );
 
-        // Choose best title (first suggestion)
-        const finalTitle = processed.suggestedTitles[0];
-        let slug = generateSlug(finalTitle);
+        // Use AI-generated title
+        const finalTitle = processed.title;
+        let slug = processed.slug;
 
         // Ensure unique slug
         let slugCounter = 1;
         while (await checkSlugExists(slug)) {
-          slug = `${generateSlug(finalTitle)}-${slugCounter}`;
+          slug = `${processed.slug}-${slugCounter}`;
           slugCounter++;
         }
 
         // Get cover image
-        const coverImage = getDefaultCoverImage(finalTitle);
+        const coverImage = processed.coverImageUrl || getDefaultCoverImage(finalTitle);
 
-        // Insert into articles table (without internal links first)
+        // Insert into articles table
         await insertArticleFromRaw({
           title: finalTitle,
           slug,
@@ -65,28 +65,6 @@ export async function GET(request: Request) {
 
         console.log(`✓ Article inserted: ${finalTitle}`);
 
-        // Extract keywords for internal linking
-        console.log('  Extracting keywords...');
-        const keywords = await extractKeywords(processed.content, finalTitle);
-        console.log(`  Keywords: ${keywords.join(', ')}`);
-
-        // Build internal links
-        console.log('  Building internal links...');
-        const contentWithLinks = await buildInternalLinks(
-          processed.content,
-          keywords,
-          slug,
-          4 // Max 4 internal links
-        );
-
-        const linkCount = countInternalLinks(contentWithLinks);
-        console.log(`  Added ${linkCount} internal links`);
-
-        // Update article with internal links
-        if (linkCount > 0) {
-          await updateArticleContent(slug, contentWithLinks);
-        }
-
         // Update raw article status
         await updateRawArticleStatus(rawArticle.id, 'processed');
 
@@ -95,8 +73,7 @@ export async function GET(request: Request) {
           originalTitle: rawArticle.title,
           newTitle: finalTitle,
           slug,
-          internalLinks: linkCount,
-          keywords: keywords.slice(0, 3), // Show first 3 keywords
+          tags: processed.tags,
           status: 'success',
         });
 
