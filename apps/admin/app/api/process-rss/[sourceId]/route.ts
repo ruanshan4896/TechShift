@@ -54,13 +54,30 @@ export async function POST(
     // Get latest 10 articles
     const latestArticles = feed.items.slice(0, 10);
     
-    const results = [];
+    // Detailed processing logs
+    type ProcessLog = {
+      title: string;
+      url: string;
+      status: 'SUCCESS' | 'SKIPPED' | 'FAILED';
+      message: string;
+    };
+    
+    const logs: ProcessLog[] = [];
     let processedCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
 
     for (const item of latestArticles) {
+      const articleTitle = item.title || 'Unknown';
+      const articleUrl = item.link || 'No URL';
+      
       if (!item.link || !item.title) {
+        logs.push({
+          title: articleTitle,
+          url: articleUrl,
+          status: 'SKIPPED',
+          message: 'Missing title or URL',
+        });
         skippedCount++;
         continue;
       }
@@ -70,6 +87,12 @@ export async function POST(
         const exists = await checkArticleExists(item.link);
         if (exists) {
           console.log(`  ⏭️  Skipped duplicate: ${item.link}`);
+          logs.push({
+            title: articleTitle,
+            url: articleUrl,
+            status: 'SKIPPED',
+            message: 'Duplicate URL found in database',
+          });
           skippedCount++;
           continue;
         }
@@ -80,6 +103,12 @@ export async function POST(
         
         if (originalContent.length < 100) {
           console.log('  Content too short, skipping');
+          logs.push({
+            title: articleTitle,
+            url: articleUrl,
+            status: 'SKIPPED',
+            message: `Content too short (${originalContent.length} chars, minimum 100)`,
+          });
           skippedCount++;
           continue;
         }
@@ -157,11 +186,11 @@ export async function POST(
         }
 
         processedCount++;
-        results.push({
+        logs.push({
           title: processed.title,
-          slug: finalSlug,
-          tags: processed.tags,
-          status: 'success',
+          url: articleUrl,
+          status: 'SUCCESS',
+          message: `Created successfully as draft with slug: ${finalSlug}`,
         });
 
         console.log(`  ✓ Saved as draft: ${processed.title}`);
@@ -169,10 +198,13 @@ export async function POST(
       } catch (error) {
         console.error(`  ✗ Error processing article:`, error);
         errorCount++;
-        results.push({
-          title: item.title,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          status: 'failed',
+        
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        logs.push({
+          title: articleTitle,
+          url: articleUrl,
+          status: 'FAILED',
+          message: `Processing failed: ${errorMessage}`,
         });
       }
     }
@@ -180,12 +212,14 @@ export async function POST(
     return NextResponse.json({
       success: true,
       source: source.name,
-      totalFetched: latestArticles.length,
-      processed: processedCount,
-      skipped: skippedCount,
-      errors: errorCount,
-      results,
-      message: `Successfully processed ${processedCount} articles. They are now available in the Drafts section for review.`,
+      summary: {
+        total: latestArticles.length,
+        success: processedCount,
+        skipped: skippedCount,
+        failed: errorCount,
+      },
+      logs,
+      message: `Processed ${latestArticles.length} articles: ${processedCount} success, ${skippedCount} skipped, ${errorCount} failed.`,
     });
 
   } catch (error) {

@@ -10,6 +10,26 @@ interface RssSource {
   is_active: boolean;
 }
 
+interface ProcessLog {
+  title: string;
+  url: string;
+  status: 'SUCCESS' | 'SKIPPED' | 'FAILED';
+  message: string;
+}
+
+interface ProcessResult {
+  success: boolean;
+  source: string;
+  summary: {
+    total: number;
+    success: number;
+    skipped: number;
+    failed: number;
+  };
+  logs: ProcessLog[];
+  message: string;
+}
+
 export default function RssAdminPage() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,6 +37,8 @@ export default function RssAdminPage() {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', rss_url: '', is_active: true });
+  const [processingResult, setProcessingResult] = useState<ProcessResult | null>(null);
+  const [showLogsModal, setShowLogsModal] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -161,24 +183,19 @@ export default function RssAdminPage() {
     if (!confirm('Fetch và xử lý 10 bài viết mới nhất từ nguồn này với AI?\n\nLưu ý: Sẽ tốn API credits.')) return;
     
     setLoading(true);
+    setProcessingResult(null);
+    
     try {
       const res = await fetch(`/api/process-rss/${sourceId}`, {
         method: 'POST',
       });
-      const data = await res.json();
+      const data: ProcessResult = await res.json();
       
       if (data.success) {
-        alert(
-          `✓ ${data.message}\n\n` +
-          `Tổng số: ${data.totalFetched} bài\n` +
-          `Đã xử lý: ${data.processed} bài\n` +
-          `Bỏ qua: ${data.skipped} bài\n` +
-          `Lỗi: ${data.errors} bài\n\n` +
-          `Các bài viết mới đã được lưu dưới dạng bản nháp.\n` +
-          `Vào Dashboard để xem và xuất bản.`
-        );
+        setProcessingResult(data);
+        setShowLogsModal(true);
       } else {
-        alert(`Lỗi: ${data.error || 'Unknown error'}`);
+        alert(`Lỗi: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -367,6 +384,130 @@ export default function RssAdminPage() {
           </div>
         </div>
       </main>
+
+      {/* Processing Logs Modal */}
+      {showLogsModal && processingResult && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Processing Report
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Source: {processingResult.source}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowLogsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+              <div className="grid grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {processingResult.summary.total}
+                  </div>
+                  <div className="text-sm text-gray-600">Total</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {processingResult.summary.success}
+                  </div>
+                  <div className="text-sm text-gray-600">Success</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {processingResult.summary.skipped}
+                  </div>
+                  <div className="text-sm text-gray-600">Skipped</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {processingResult.summary.failed}
+                  </div>
+                  <div className="text-sm text-gray-600">Failed</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Logs List */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-3">
+                {processingResult.logs.map((log, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg border-l-4 ${
+                      log.status === 'SUCCESS'
+                        ? 'bg-green-50 border-green-500'
+                        : log.status === 'SKIPPED'
+                        ? 'bg-yellow-50 border-yellow-500'
+                        : 'bg-red-50 border-red-500'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded ${
+                              log.status === 'SUCCESS'
+                                ? 'bg-green-100 text-green-800'
+                                : log.status === 'SKIPPED'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {log.status}
+                          </span>
+                          <h3 className="font-medium text-gray-900 text-sm">
+                            {log.title}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {log.message}
+                        </p>
+                        <a
+                          href={log.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:text-blue-800 break-all"
+                        >
+                          {log.url}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-600">
+                  {processingResult.message}
+                </p>
+                <button
+                  onClick={() => setShowLogsModal(false)}
+                  className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
