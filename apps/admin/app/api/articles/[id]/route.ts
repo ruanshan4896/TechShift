@@ -62,15 +62,35 @@ export async function DELETE(
     await sql`DELETE FROM articles WHERE id = ${articleId}`;
     
     // Delete related raw_articles to allow re-fetching
-    // We delete by matching title (not perfect but works for most cases)
+    // Strategy: Delete by fuzzy title matching since we don't have direct foreign key
     // This allows admin to re-fetch and re-process the article from RSS
     try {
-      await sql`
-        DELETE FROM raw_articles 
-        WHERE title ILIKE ${`%${article.title}%`}
-        OR title ILIKE ${`%${article.slug}%`}
-      `;
-      console.log(`Deleted raw_articles for: ${article.title}`);
+      // Extract key words from title for better matching
+      const titleWords = article.title
+        .toLowerCase()
+        .replace(/[^\w\s]/g, ' ') // Remove special chars
+        .split(/\s+/)
+        .filter((word: string) => word.length > 3) // Only words > 3 chars
+        .slice(0, 5); // Take first 5 significant words
+      
+      if (titleWords.length > 0) {
+        // Build ILIKE conditions for each word
+        const conditions = titleWords.map((word: string) => `title ILIKE '%${word}%'`).join(' AND ');
+        
+        // Delete raw_articles that match most of the title words
+        const result = await sql.query(
+          `DELETE FROM raw_articles WHERE ${conditions} RETURNING id, title, original_url`
+        );
+        
+        if (result.length > 0) {
+          console.log(`Deleted ${result.length} raw_articles for: ${article.title}`);
+          result.forEach((row: any) => {
+            console.log(`  - ${row.title} (${row.original_url})`);
+          });
+        } else {
+          console.log(`No matching raw_articles found for: ${article.title}`);
+        }
+      }
     } catch (rawDeleteError) {
       // Log but don't fail the main delete operation
       console.warn('Could not delete raw_articles:', rawDeleteError);
