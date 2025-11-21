@@ -2,6 +2,8 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
+export type ArticleStatus = 'DRAFT' | 'PUBLISHED';
+
 export interface Article {
   id: number;
   title: string;
@@ -13,6 +15,7 @@ export interface Article {
   created_at: Date;
   category_id?: number;
   view_count: number;
+  status: ArticleStatus;
 }
 
 export interface Category {
@@ -50,7 +53,8 @@ export async function createArticlesTable() {
       published_at TIMESTAMP NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       category_id INTEGER,
-      view_count INTEGER DEFAULT 0
+      view_count INTEGER DEFAULT 0,
+      status TEXT CHECK (status IN ('DRAFT', 'PUBLISHED')) DEFAULT 'PUBLISHED'
     )
   `;
 }
@@ -124,6 +128,7 @@ export async function createCategoriesAndTagsTables() {
 export async function getLatestArticles(limit: number = 10): Promise<Article[]> {
   const rows = await sql`
     SELECT * FROM articles 
+    WHERE status = 'PUBLISHED'
     ORDER BY published_at DESC 
     LIMIT ${limit}
   `;
@@ -136,6 +141,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleWithCategor
     FROM articles a
     LEFT JOIN categories c ON a.category_id = c.id
     WHERE a.slug = ${slug}
+    AND a.status = 'PUBLISHED'
     LIMIT 1
   `;
   return (rows[0] as ArticleWithCategory) || null;
@@ -319,6 +325,7 @@ export async function findRelatedArticles(keyword: string, excludeSlug: string, 
   const rows = await sql`
     SELECT * FROM articles 
     WHERE slug != ${excludeSlug}
+    AND status = 'PUBLISHED'
     AND (
       title ILIKE ${`%${keyword}%`}
       OR content ILIKE ${`%${keyword}%`}
@@ -363,6 +370,7 @@ export async function getPopularTags(limit: number = 10): Promise<Tag[]> {
     SELECT t.*, COUNT(at.article_id) as article_count
     FROM tags t
     LEFT JOIN article_tags at ON t.id = at.tag_id
+    LEFT JOIN articles a ON at.article_id = a.id AND a.status = 'PUBLISHED'
     GROUP BY t.id
     ORDER BY article_count DESC, t.name
     LIMIT ${limit}
@@ -390,6 +398,7 @@ export async function getArticlesByCategory(categorySlug: string, limit: number 
     FROM articles a
     LEFT JOIN categories c ON a.category_id = c.id
     WHERE c.slug = ${categorySlug}
+    AND a.status = 'PUBLISHED'
     ORDER BY a.published_at DESC
     LIMIT ${limit}
   `;
@@ -403,6 +412,7 @@ export async function getArticlesByTag(tagSlug: string, limit: number = 20): Pro
     INNER JOIN article_tags at ON a.id = at.article_id
     INNER JOIN tags t ON at.tag_id = t.id
     WHERE t.slug = ${tagSlug}
+    AND a.status = 'PUBLISHED'
     ORDER BY a.published_at DESC
     LIMIT ${limit}
   `;
@@ -434,7 +444,8 @@ export async function searchArticles(query: string, limit: number = 20): Promise
   const searchTerm = `%${query}%`;
   const rows = await sql`
     SELECT * FROM articles
-    WHERE title ILIKE ${searchTerm} OR content ILIKE ${searchTerm}
+    WHERE status = 'PUBLISHED'
+    AND (title ILIKE ${searchTerm} OR content ILIKE ${searchTerm})
     ORDER BY published_at DESC
     LIMIT ${limit}
   `;
@@ -452,6 +463,7 @@ export async function incrementViewCount(slug: string): Promise<void> {
 export async function getFeaturedArticles(limit: number = 5): Promise<Article[]> {
   const rows = await sql`
     SELECT * FROM articles
+    WHERE status = 'PUBLISHED'
     ORDER BY view_count DESC, published_at DESC
     LIMIT ${limit}
   `;
@@ -467,6 +479,7 @@ export async function getRelatedArticlesByTags(articleId: number, limit: number 
       SELECT tag_id FROM article_tags WHERE article_id = ${articleId}
     )
     AND a.id != ${articleId}
+    AND a.status = 'PUBLISHED'
     GROUP BY a.id
     ORDER BY shared_tags DESC, a.published_at DESC
     LIMIT ${limit}
@@ -475,7 +488,7 @@ export async function getRelatedArticlesByTags(articleId: number, limit: number 
 }
 
 export async function getTotalArticlesCount(): Promise<number> {
-  const rows = await sql`SELECT COUNT(*) as count FROM articles`;
+  const rows = await sql`SELECT COUNT(*) as count FROM articles WHERE status = 'PUBLISHED'`;
   return rows[0].count as number;
 }
 
@@ -485,6 +498,7 @@ export async function getTotalArticlesByCategory(categorySlug: string): Promise<
     FROM articles a
     INNER JOIN categories c ON a.category_id = c.id
     WHERE c.slug = ${categorySlug}
+    AND a.status = 'PUBLISHED'
   `;
   return rows[0].count as number;
 }
@@ -496,6 +510,7 @@ export async function getTotalArticlesByTag(tagSlug: string): Promise<number> {
     INNER JOIN article_tags at ON a.id = at.article_id
     INNER JOIN tags t ON at.tag_id = t.id
     WHERE t.slug = ${tagSlug}
+    AND a.status = 'PUBLISHED'
   `;
   return rows[0].count as number;
 }
@@ -503,6 +518,7 @@ export async function getTotalArticlesByTag(tagSlug: string): Promise<number> {
 export async function getLatestArticlesPaginated(limit: number = 10, offset: number = 0): Promise<Article[]> {
   const rows = await sql`
     SELECT * FROM articles 
+    WHERE status = 'PUBLISHED'
     ORDER BY published_at DESC 
     LIMIT ${limit}
     OFFSET ${offset}
@@ -516,6 +532,7 @@ export async function getArticlesByCategoryPaginated(categorySlug: string, limit
     FROM articles a
     LEFT JOIN categories c ON a.category_id = c.id
     WHERE c.slug = ${categorySlug}
+    AND a.status = 'PUBLISHED'
     ORDER BY a.published_at DESC
     LIMIT ${limit}
     OFFSET ${offset}
@@ -530,9 +547,130 @@ export async function getArticlesByTagPaginated(tagSlug: string, limit: number =
     INNER JOIN article_tags at ON a.id = at.article_id
     INNER JOIN tags t ON at.tag_id = t.id
     WHERE t.slug = ${tagSlug}
+    AND a.status = 'PUBLISHED'
     ORDER BY a.published_at DESC
     LIMIT ${limit}
     OFFSET ${offset}
+  `;
+  return rows as Article[];
+}
+
+// Draft and Status Management
+export async function getArticlesByStatus(status: ArticleStatus, limit: number = 50): Promise<Article[]> {
+  const rows = await sql`
+    SELECT * FROM articles
+    WHERE status = ${status}
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
+  return rows as Article[];
+}
+
+export async function updateArticleStatus(id: number, status: ArticleStatus): Promise<void> {
+  await sql`
+    UPDATE articles
+    SET status = ${status}
+    WHERE id = ${id}
+  `;
+}
+
+export async function insertArticleAsDraft(article: {
+  title: string;
+  slug: string;
+  content: string;
+  summary: string;
+  cover_image_url: string;
+  category_id?: number;
+}): Promise<number> {
+  const result = await sql`
+    INSERT INTO articles (title, slug, content, summary, cover_image_url, published_at, status, category_id)
+    VALUES (
+      ${article.title},
+      ${article.slug},
+      ${article.content},
+      ${article.summary},
+      ${article.cover_image_url},
+      NOW(),
+      'DRAFT',
+      ${article.category_id || null}
+    )
+    RETURNING id
+  `;
+  return result[0].id as number;
+}
+
+export async function getArticleById(id: number): Promise<Article | null> {
+  const rows = await sql`
+    SELECT * FROM articles
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  return (rows[0] as Article) || null;
+}
+
+export async function updateArticle(id: number, article: Partial<Article>): Promise<void> {
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (article.title !== undefined) {
+    updates.push(`title = $${paramIndex++}`);
+    values.push(article.title);
+  }
+  if (article.slug !== undefined) {
+    updates.push(`slug = $${paramIndex++}`);
+    values.push(article.slug);
+  }
+  if (article.content !== undefined) {
+    updates.push(`content = $${paramIndex++}`);
+    values.push(article.content);
+  }
+  if (article.summary !== undefined) {
+    updates.push(`summary = $${paramIndex++}`);
+    values.push(article.summary);
+  }
+  if (article.cover_image_url !== undefined) {
+    updates.push(`cover_image_url = $${paramIndex++}`);
+    values.push(article.cover_image_url);
+  }
+  if (article.category_id !== undefined) {
+    updates.push(`category_id = $${paramIndex++}`);
+    values.push(article.category_id);
+  }
+  if (article.status !== undefined) {
+    updates.push(`status = $${paramIndex++}`);
+    values.push(article.status);
+  }
+
+  if (updates.length > 0) {
+    values.push(id);
+    await sql.query(
+      `UPDATE articles SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+      values
+    );
+  }
+}
+
+export async function deleteArticleTags(articleId: number): Promise<void> {
+  await sql`
+    DELETE FROM article_tags
+    WHERE article_id = ${articleId}
+  `;
+}
+
+export async function getPublishedArticlesForLinking(excludeId: number, tagNames: string[], limit: number = 3): Promise<Article[]> {
+  if (tagNames.length === 0) return [];
+  
+  const rows = await sql`
+    SELECT DISTINCT a.*
+    FROM articles a
+    INNER JOIN article_tags at ON a.id = at.article_id
+    INNER JOIN tags t ON at.tag_id = t.id
+    WHERE a.status = 'PUBLISHED'
+    AND a.id != ${excludeId}
+    AND t.name = ANY(${tagNames})
+    ORDER BY a.published_at DESC
+    LIMIT ${limit}
   `;
   return rows as Article[];
 }

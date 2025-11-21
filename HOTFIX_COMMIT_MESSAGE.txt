@@ -1,0 +1,74 @@
+hotfix(admin): Strip Markdown from article titles
+
+🐛 Problem:
+AI occasionally inserts Markdown formatting into title JSON values, causing:
+- Titles stored with **bold** or *italic* syntax in database
+- Ugly display on website (showing ** and * characters)
+- Poor SEO with Markdown in meta tags
+
+Example issue:
+"Tiết lộ 'góc khuất' gây tranh cãi: Những **điểm yếu iOS** khiến iFan cũng phải ngao ngán!"
+
+✅ Solution:
+
+1. Import stripMarkdown function
+   - Add stripMarkdown to imports from markdown-utils
+   - Use alongside existing createMetaDescription
+
+2. Update AI prompt
+   - Add explicit instruction: "Title and Summary must be PLAIN TEXT ONLY"
+   - Clarify: "Do NOT use Markdown formatting (bold, italic, links) inside title or summary values"
+   - Specify: Only content field can contain Markdown
+
+3. Strip Markdown from title
+   - Apply stripMarkdown() to parsed.title before return
+   - Ensure title is always plain text in database
+   - Same approach as summary cleaning
+
+Code changes:
+```typescript
+// Import
+import { stripMarkdown } from './markdown-utils';
+
+// Prompt update
+**CRITICAL FORMATTING RULES:**
+- Title and Summary must be PLAIN TEXT ONLY
+- Do NOT use Markdown formatting inside title or summary values
+
+// Processing
+const cleanTitle = stripMarkdown(parsed.title);
+const cleanSummary = createMetaDescription(parsed.summary, 160);
+
+return {
+  title: cleanTitle,        // ✅ Now clean!
+  content: cleanContentResult,
+  summary: cleanSummary,
+};
+```
+
+📦 Files Modified:
+* apps/admin/lib/ai-processor.ts
+
+📚 Documentation:
++ HOTFIX_TITLE_MARKDOWN.md - Detailed explanation
++ TEST_TITLE_HOTFIX.md - Testing guide
+
+🎯 Impact:
+✅ All new articles will have clean titles
+✅ No more ** or * in title field
+✅ Better website display
+✅ Improved SEO with clean meta tags
+✅ Consistent formatting across all articles
+
+🧪 Testing:
+- Process new RSS articles
+- Verify titles in database are plain text
+- Check website display is clean
+- Verify meta tags have no Markdown
+
+Priority: High
+Type: Hotfix
+Affects: All new articles
+Backward compatible: Yes (existing articles unaffected)
+
+Co-authored-by: Kiro AI Assistant <kiro@example.com>

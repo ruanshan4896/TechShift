@@ -1,0 +1,121 @@
+feat(admin): Add 3 major features - Meta description, Internal linking, Bulk actions
+
+🎯 Objectives:
+1. Fix Markdown in meta descriptions for better SEO
+2. Refactor internal linking logic (dedup, positioning, formatting)
+3. Add bulk actions to admin dashboard
+
+✅ Task 1: Meta Description Fix
+
+Created: apps/admin/lib/markdown-utils.ts
+- stripMarkdown(): Remove all Markdown syntax from text
+- truncateText(): Smart truncation at word boundaries
+- createMetaDescription(): Combine strip + truncate for perfect meta
+
+Modified: apps/admin/lib/ai-processor.ts
+- Import createMetaDescription utility
+- Apply to summary before saving to database
+- Ensure summary ≤ 160 chars, plain text only
+
+Benefits:
+✅ Clean meta descriptions for Google Search
+✅ Better Facebook share previews
+✅ No more **bold** or *italic* in summaries
+
+---
+
+✅ Task 2: Internal Linking Refactor
+
+Created: apps/admin/lib/internal-linking.ts
+- deduplicateArticles(): Remove duplicate articles by slug
+- calculateLinkPositions(): Smart positioning algorithm
+- isSuitableParagraph(): Validate paragraph suitability
+- insertInternalLinks(): New implementation with:
+  * Deduplication (no repeated articles)
+  * Insert BETWEEN paragraphs (not at end)
+  * Blockquote format: > **Xem thêm:** [Title](/posts/slug)
+  * Even distribution throughout content
+  * Avoid headers, code blocks, lists
+
+Modified: apps/admin/lib/ai-processor.ts
+- Import new insertInternalLinks implementation
+- Deprecate old function, redirect to new one
+
+Benefits:
+✅ No duplicate links
+✅ Professional blockquote format
+✅ Natural placement between paragraphs
+✅ Better user experience
+
+---
+
+✅ Task 3: Bulk Actions in Dashboard
+
+Created: apps/admin/app/api/articles/bulk-publish/route.ts
+- POST /api/articles/bulk-publish
+- Accept array of IDs
+- Update all to PUBLISHED status
+- Revalidate cache
+
+Created: apps/admin/app/api/articles/bulk-delete/route.ts
+- POST /api/articles/bulk-delete
+- Accept array of IDs
+- Delete multiple articles at once
+- Parameterized query for security
+
+Modified: apps/admin/app/dashboard/page.tsx
+- Add checkbox selection (individual + select all)
+- Add selectedIds state management
+- Add Floating Action Bar (appears when items selected)
+- Add bulk action handlers:
+  * handleBulkPublish() - Publish selected drafts
+  * handleBulkDelete() - Delete selected articles
+  * toggleSelectAll() - Select/deselect all
+  * toggleSelectOne() - Toggle individual selection
+- Highlight selected rows (bg-blue-50)
+- Loading states for bulk operations
+- Confirmation dialogs
+
+UI Features:
+✅ Checkbox at start of each row
+✅ "Select All" checkbox in header
+✅ Floating Action Bar (fixed bottom center)
+✅ Shows count: "Đã chọn X bài viết"
+✅ Buttons: Xuất bản, Xóa, Hủy
+✅ Auto-refresh after operations
+✅ Clear selection after completion
+
+Benefits:
+✅ Save time with bulk operations
+✅ Better admin workflow
+✅ Professional UI/UX
+✅ Confirmation dialogs prevent mistakes
+
+---
+
+📦 Files Created:
++ apps/admin/lib/markdown-utils.ts
++ apps/admin/lib/internal-linking.ts
++ apps/admin/app/api/articles/bulk-publish/route.ts
++ apps/admin/app/api/articles/bulk-delete/route.ts
+
+📝 Files Modified:
+* apps/admin/lib/ai-processor.ts
+* apps/admin/app/dashboard/page.tsx
+
+📚 Documentation:
++ FEATURE_COMPLETION_SUMMARY.md
++ QUICK_TEST_GUIDE.md
+
+🧪 Testing:
+- Test 1: Verify summary is plain text (no Markdown)
+- Test 2: Verify internal links use blockquote format
+- Test 3: Verify bulk actions work correctly
+
+🎉 Results:
+✅ Better SEO with clean meta descriptions
+✅ Professional internal linking
+✅ Efficient bulk operations for admins
+✅ Improved overall admin experience
+
+Co-authored-by: Kiro AI Assistant <kiro@example.com>

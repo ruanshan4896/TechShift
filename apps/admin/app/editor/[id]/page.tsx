@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import TagSelector from '@/components/TagSelector';
 
 interface Category {
   id: number;
@@ -17,6 +18,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [id, setId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [articleStatus, setArticleStatus] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -52,6 +55,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           cover_image_url: data.article.cover_image_url || '',
           category_id: data.article.category_id?.toString() || '',
         });
+        setArticleStatus(data.article.status || 'DRAFT');
+        setSelectedTags(data.tags?.map((t: any) => t.name) || []);
       }
     } catch (error) {
       console.error('Error fetching article:', error);
@@ -83,6 +88,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         body: JSON.stringify({
           ...formData,
           category_id: formData.category_id ? parseInt(formData.category_id) : null,
+          tags: selectedTags,
         }),
       });
 
@@ -212,6 +218,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tags
+              </label>
+              <TagSelector 
+                selectedTags={selectedTags}
+                onChange={setSelectedTags}
+              />
             </div>
 
             <div>

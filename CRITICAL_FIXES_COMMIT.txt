@@ -1,0 +1,112 @@
+fix(critical): Prevent draft leak & sync raw_articles deletion
+
+🚨 Critical Security & Data Integrity Fixes
+
+## Fix 1: Prevent Draft Articles from Leaking to Public Website
+
+Problem:
+- Website was displaying DRAFT articles on all public pages
+- Users could access draft content via direct URL
+- Search was indexing draft content
+- Security issue: Unpublished content exposed
+
+Solution:
+- Added `WHERE status = 'PUBLISHED'` filter to ALL public queries
+- Fixed 15 database functions in apps/website/lib/db.ts
+
+Functions fixed:
+✅ getLatestArticles() - Homepage
+✅ getArticleBySlug() - Article detail page
+✅ findRelatedArticles() - Related articles
+✅ getArticlesByCategory() - Category pages
+✅ getArticlesByTag() - Tag pages
+✅ searchArticles() - Search functionality
+✅ getFeaturedArticles() - Featured section
+✅ getRelatedArticlesByTags() - Related by tags
+✅ getTotalArticlesCount() - Article count
+✅ getTotalArticlesByCategory() - Category count
+✅ getTotalArticlesByTag() - Tag count
+✅ getLatestArticlesPaginated() - Pagination
+✅ getArticlesByCategoryPaginated() - Category pagination
+✅ getArticlesByTagPaginated() - Tag pagination
+✅ getPopularTags() - Popular tags (only count published)
+
+Impact:
+✅ All public pages now only show PUBLISHED articles
+✅ Direct access to draft returns 404
+✅ Search only finds published content
+✅ Pagination counts only published articles
+✅ Tags only count from published articles
+
+---
+
+## Fix 2: Sync raw_articles Deletion with Article Deletion
+
+Problem:
+- Deleting article in admin didn't delete raw_articles record
+- System reported "Duplicate" when trying to re-fetch from RSS
+- Couldn't re-process deleted articles
+- Admin workflow broken
+
+Solution:
+- Modified DELETE APIs to also delete related raw_articles
+- Match by title and slug (ILIKE for case-insensitive)
+- Allows re-fetching and re-processing after deletion
+
+Files modified:
+* apps/admin/app/api/articles/[id]/route.ts - Single delete
+* apps/admin/app/api/articles/bulk-delete/route.ts - Bulk delete
+
+Logic:
+```typescript
+// 1. Get article info before deleting
+const article = await sql`SELECT title, slug FROM articles WHERE id = ${id}`;
+
+// 2. Delete article
+await sql`DELETE FROM articles WHERE id = ${id}`;
+
+// 3. Delete related raw_articles
+await sql`
+  DELETE FROM raw_articles 
+  WHERE title ILIKE ${`%${article.title}%`}
+  OR title ILIKE ${`%${article.slug}%`}
+`;
+```
+
+Impact:
+✅ Single delete removes raw_articles
+✅ Bulk delete removes all raw_articles
+✅ Can re-fetch deleted articles from RSS
+✅ Can re-process articles from scratch
+✅ No more "Duplicate" errors
+✅ Improved admin workflow
+
+---
+
+📦 Files Modified:
+* apps/website/lib/db.ts - 15 functions fixed
+* apps/admin/app/api/articles/[id]/route.ts - Single delete
+* apps/admin/app/api/articles/bulk-delete/route.ts - Bulk delete
+
+📚 Documentation:
++ CRITICAL_FIXES_SUMMARY.md - Detailed explanation
++ TEST_CRITICAL_FIXES.md - Testing guide
+
+🧪 Testing:
+- Test 1: Verify drafts not visible on website
+- Test 2: Verify direct access to draft returns 404
+- Test 3: Verify delete removes raw_articles
+- Test 4: Verify can re-fetch after delete
+
+🎯 Results:
+✅ Security: Draft content no longer exposed
+✅ Data Integrity: raw_articles synced with articles
+✅ Workflow: Can re-fetch and re-process deleted articles
+✅ User Experience: Only published content visible
+
+Priority: Critical
+Type: Security + Data Integrity
+Breaking: No
+Backward compatible: Yes
+
+Co-authored-by: Kiro AI Assistant <kiro@example.com>

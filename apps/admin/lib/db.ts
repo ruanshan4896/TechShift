@@ -2,6 +2,8 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
+export type ArticleStatus = 'DRAFT' | 'PUBLISHED';
+
 export interface Article {
   id: number;
   title: string;
@@ -13,6 +15,7 @@ export interface Article {
   created_at: Date;
   category_id?: number;
   view_count: number;
+  status: ArticleStatus;
 }
 
 export interface Category {
@@ -531,6 +534,126 @@ export async function getArticlesByTagPaginated(tagSlug: string, limit: number =
     ORDER BY a.published_at DESC
     LIMIT ${limit}
     OFFSET ${offset}
+  `;
+  return rows as Article[];
+}
+
+// Draft and Status Management
+export async function getArticlesByStatus(status: ArticleStatus, limit: number = 50): Promise<Article[]> {
+  const rows = await sql`
+    SELECT * FROM articles
+    WHERE status = ${status}
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
+  return rows as Article[];
+}
+
+export async function updateArticleStatus(id: number, status: ArticleStatus): Promise<void> {
+  await sql`
+    UPDATE articles
+    SET status = ${status}
+    WHERE id = ${id}
+  `;
+}
+
+export async function insertArticleAsDraft(article: {
+  title: string;
+  slug: string;
+  content: string;
+  summary: string;
+  cover_image_url: string;
+  category_id?: number;
+}): Promise<number> {
+  const result = await sql`
+    INSERT INTO articles (title, slug, content, summary, cover_image_url, published_at, status, category_id)
+    VALUES (
+      ${article.title},
+      ${article.slug},
+      ${article.content},
+      ${article.summary},
+      ${article.cover_image_url},
+      NOW(),
+      'DRAFT',
+      ${article.category_id || null}
+    )
+    RETURNING id
+  `;
+  return result[0].id as number;
+}
+
+export async function getArticleById(id: number): Promise<Article | null> {
+  const rows = await sql`
+    SELECT * FROM articles
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  return (rows[0] as Article) || null;
+}
+
+export async function updateArticle(id: number, article: Partial<Article>): Promise<void> {
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (article.title !== undefined) {
+    updates.push(`title = $${paramIndex++}`);
+    values.push(article.title);
+  }
+  if (article.slug !== undefined) {
+    updates.push(`slug = $${paramIndex++}`);
+    values.push(article.slug);
+  }
+  if (article.content !== undefined) {
+    updates.push(`content = $${paramIndex++}`);
+    values.push(article.content);
+  }
+  if (article.summary !== undefined) {
+    updates.push(`summary = $${paramIndex++}`);
+    values.push(article.summary);
+  }
+  if (article.cover_image_url !== undefined) {
+    updates.push(`cover_image_url = $${paramIndex++}`);
+    values.push(article.cover_image_url);
+  }
+  if (article.category_id !== undefined) {
+    updates.push(`category_id = $${paramIndex++}`);
+    values.push(article.category_id);
+  }
+  if (article.status !== undefined) {
+    updates.push(`status = $${paramIndex++}`);
+    values.push(article.status);
+  }
+
+  if (updates.length > 0) {
+    values.push(id);
+    await sql.query(
+      `UPDATE articles SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+      values
+    );
+  }
+}
+
+export async function deleteArticleTags(articleId: number): Promise<void> {
+  await sql`
+    DELETE FROM article_tags
+    WHERE article_id = ${articleId}
+  `;
+}
+
+export async function getPublishedArticlesForLinking(excludeId: number, tagNames: string[], limit: number = 3): Promise<Article[]> {
+  if (tagNames.length === 0) return [];
+  
+  const rows = await sql`
+    SELECT DISTINCT a.*
+    FROM articles a
+    INNER JOIN article_tags at ON a.id = at.article_id
+    INNER JOIN tags t ON at.tag_id = t.id
+    WHERE a.status = 'PUBLISHED'
+    AND a.id != ${excludeId}
+    AND t.name = ANY(${tagNames})
+    ORDER BY a.published_at DESC
+    LIMIT ${limit}
   `;
   return rows as Article[];
 }

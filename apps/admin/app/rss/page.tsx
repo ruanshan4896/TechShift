@@ -24,12 +24,27 @@ export default function RssAdminPage() {
     }
   }, [isAuthenticated]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD || password === 'admin123') {
-      setIsAuthenticated(true);
-    } else {
-      alert('Mật khẩu không đúng!');
+    setLoading(true);
+    
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        setIsAuthenticated(true);
+      } else {
+        alert('Mật khẩu không đúng!');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Lỗi đăng nhập. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,6 +153,36 @@ export default function RssAdminPage() {
       }
     } catch (error) {
       alert('Có lỗi khi xử lý bài viết!');
+    }
+    setLoading(false);
+  };
+
+  const handleFetchAndProcess = async (sourceId: number) => {
+    if (!confirm('Fetch và xử lý 10 bài viết mới nhất từ nguồn này với AI?\n\nLưu ý: Sẽ tốn API credits.')) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/process-rss/${sourceId}`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        alert(
+          `✓ ${data.message}\n\n` +
+          `Tổng số: ${data.totalFetched} bài\n` +
+          `Đã xử lý: ${data.processed} bài\n` +
+          `Bỏ qua: ${data.skipped} bài\n` +
+          `Lỗi: ${data.errors} bài\n\n` +
+          `Các bài viết mới đã được lưu dưới dạng bản nháp.\n` +
+          `Vào Dashboard để xem và xuất bản.`
+        );
+      } else {
+        alert(`Lỗi: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Có lỗi khi xử lý RSS!');
     }
     setLoading(false);
   };
@@ -293,7 +338,16 @@ export default function RssAdminPage() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-700 mb-3 break-all">{source.rss_url}</p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {source.is_active && (
+                      <button
+                        onClick={() => handleFetchAndProcess(source.id)}
+                        disabled={loading}
+                        className="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 disabled:opacity-50 font-medium"
+                      >
+                        🤖 Fetch & Process
+                      </button>
+                    )}
                     <button
                       onClick={() => handleEdit(source)}
                       className="text-sm text-blue-700 hover:text-blue-900 font-medium"
