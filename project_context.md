@@ -348,15 +348,25 @@ packages:
 
 #### apps/website/app/posts/[slug]/page.tsx
 
-**Purpose:** Article detail page
+**Purpose:** Article detail page with Advanced SEO
 
 **Features:**
-- Full article content
-- View counter
-- Related posts
-- Tags display
-- Breadcrumbs
-- SEO meta tags (Open Graph, Twitter)
+- Full article content render
+- **Advanced SEO:**
+  - Full Metadata (Canonical, OpenGraph, Twitter Cards)
+  - **JSON-LD Schema:** `NewsArticle` & `BreadcrumbList` implementation
+  - Keywords from article tags
+  - Author and publisher information
+- View counter integration
+- Related posts & Tags display
+- Breadcrumbs navigation
+
+**SEO Implementation:**
+- Canonical URL via `alternates`
+- Open Graph with article metadata (publishedTime, modifiedTime, authors, tags)
+- Twitter Card (summary_large_image)
+- NewsArticle schema with full article data
+- BreadcrumbList schema for navigation hierarchy
 
 ---
 

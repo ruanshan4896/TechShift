@@ -25,19 +25,34 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  // Get article tags for metadata
+  const tags = await getArticleTags(article.id);
+  const tagNames = tags.map(tag => tag.name);
+
   // Get absolute URL for images
   const imageUrl = article.cover_image_url.startsWith('http') 
     ? article.cover_image_url 
     : `https://technews.vn${article.cover_image_url}`;
 
+  const canonicalUrl = `https://technews.vn/posts/${article.slug}`;
+
   return {
-    title: `${article.title} - Tech News`,
+    title: `${article.title} - TechShift`,
     description: article.summary,
+    keywords: tagNames.join(', '),
+    authors: [{ name: 'TechShift' }],
+    
+    // Canonical URL
+    alternates: {
+      canonical: canonicalUrl,
+    },
+
+    // Open Graph (Facebook, LinkedIn)
     openGraph: {
       title: article.title,
       description: article.summary,
-      url: `https://technews.vn/posts/${article.slug}`,
-      siteName: 'Tech News',
+      url: canonicalUrl,
+      siteName: 'TechShift',
       images: [
         {
           url: imageUrl,
@@ -49,12 +64,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       locale: 'vi_VN',
       type: 'article',
       publishedTime: new Date(article.published_at).toISOString(),
+      modifiedTime: new Date(article.published_at).toISOString(),
+      authors: ['TechShift'],
+      tags: tagNames,
     },
+
+    // Twitter Card
     twitter: {
       card: 'summary_large_image',
       title: article.title,
       description: article.summary,
       images: [imageUrl],
+      creator: '@TechShift',
+      site: '@TechShift',
     },
   };
 }
@@ -70,7 +92,81 @@ export default async function PostPage({ params }: PageProps) {
   // Get article tags
   const tags = await getArticleTags(article.id);
 
-  // Breadcrumb items
+  // Prepare data for structured data
+  const imageUrl = article.cover_image_url.startsWith('http') 
+    ? article.cover_image_url 
+    : `https://technews.vn${article.cover_image_url}`;
+  
+  const canonicalUrl = `https://technews.vn/posts/${article.slug}`;
+
+  // JSON-LD: NewsArticle Schema
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    image: [imageUrl],
+    datePublished: new Date(article.published_at).toISOString(),
+    dateModified: new Date(article.published_at).toISOString(),
+    author: {
+      '@type': 'Organization',
+      name: 'TechShift',
+      url: 'https://technews.vn',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'TechShift',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://technews.vn/logo.png',
+      },
+    },
+    description: article.summary,
+    articleBody: article.content,
+    keywords: tags.map(tag => tag.name).join(', '),
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': canonicalUrl,
+    },
+  };
+
+  // JSON-LD: BreadcrumbList Schema
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Trang chủ',
+        item: 'https://technews.vn',
+      },
+      ...(article.category_slug && article.category_name
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: article.category_name,
+              item: `https://technews.vn/category/${article.category_slug}`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: article.title,
+              item: canonicalUrl,
+            },
+          ]
+        : [
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: article.title,
+              item: canonicalUrl,
+            },
+          ]),
+    ],
+  };
+
+  // Breadcrumb items for UI
   const breadcrumbItems = article.category_slug && article.category_name
     ? [
         { label: article.category_name, href: `/category/${article.category_slug}` },
@@ -80,6 +176,16 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <div className="bg-gray-50">
+      {/* Structured Data - JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       <ViewCounter slug={slug} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Breadcrumbs items={breadcrumbItems} />
