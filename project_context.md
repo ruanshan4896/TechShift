@@ -4,7 +4,7 @@
 
 **Generated:** November 23, 2025  
 **Project:** TechShift - AI-Powered Tech News CMS  
-**Tech Stack:** Next.js 16, TypeScript, Tailwind CSS, Neon Postgres, Google Gemini AI
+**Tech Stack:** Next.js 16, TypeScript, Tailwind CSS, Neon Postgres, Google Gemini AI, Three.js & React Three Fiber
 
 ---
 
@@ -332,16 +332,68 @@ packages:
 
 ---
 
+### Website App - Components
+
+#### apps/website/components/TechBackground.tsx
+
+**Purpose:** 3D particle network background using Three.js
+
+**Features:**
+- Particle system with 100 particles
+- Neural network-style connections between nearby particles
+- Smooth rotation and animation
+- Cyan particles with purple connection lines
+- Dark gradient background (slate to indigo)
+- Performance optimized with React Three Fiber
+- Fixed positioning (z-index: -10)
+
+**Tech Stack:**
+- Three.js for 3D rendering
+- @react-three/fiber for React integration
+- @react-three/drei for helpers (Points, PointMaterial)
+
+**Animation:**
+- Continuous rotation on Y-axis (0.05 speed)
+- Sine wave motion on X-axis
+- Smooth 60fps rendering
+
+#### apps/website/components/ArticleCard.tsx
+
+**Purpose:** Glassmorphism article card with hover effects
+
+**Features:**
+- Backdrop blur with semi-transparent background
+- Cover image with gradient overlay
+- Meta information (date, view count)
+- Hover effects (scale, glow, color change)
+- Responsive design
+- Line clamp for title and summary
+
+**Design:**
+- Background: `bg-white/10 backdrop-blur-md`
+- Border: `border-white/20` → `border-cyan-500/50` on hover
+- Shadow: Cyan glow on hover
+- Text: White with cyan accent on hover
+
 ### Website App - Pages
 
 #### apps/website/app/page.tsx
 
-**Purpose:** Homepage with latest articles
+**Purpose:** Futuristic homepage with 3D background
 
 **Features:**
-- Paginated article list
-- Sidebar with popular tags
-- ISR (revalidate every hour)
+- **3D Particle Background:** Neural network-style particle system with Three.js
+- **Hero Section:** Gradient text (TechShift), glassmorphism subtitle
+- **Article Grid:** 2-column responsive grid with glassmorphism cards
+- **Sidebar:** Popular tags and categories
+- **ISR:** Revalidate every hour
+- **Pagination:** Server-side pagination
+
+**Design System:**
+- 3D particle network background (cyan/purple theme)
+- Glassmorphism cards with backdrop blur
+- Dark theme with neon accents
+- Futuristic tech aesthetic
 - Responsive grid layout
 
 ---
